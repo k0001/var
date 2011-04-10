@@ -1,0 +1,79 @@
+<project name="hello-world" default="run" xmlns:ivy="antlib:org.apache.ivy.ant">
+    <property name="lib.dir" value="lib" />
+    <property name="build.dir" value="build" />
+    <property name="src.dir" value="src" />
+
+    <path id="lib.path.id">
+        <fileset dir="${lib.dir}" />
+    </path>
+    <path id="run.path.id">
+        <path refid="lib.path.id" />
+        <path location="${build.dir}" />
+    </path>
+
+    <!-- targets -->
+
+    <target name="run" depends="resolve, generate-dirs" description="compile and run the project">
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path.id" />
+        <property name="msg" value="hello ivy !"/>
+        <java classpathref="run.path.id" classname="example.Hello">
+            <arg value="-message"/>
+            <arg value="${msg}"/>
+        </java>
+    </target>
+
+    <!-- utils -->
+
+    <target name="resolve" depends="init-ivy" description="retreive dependencies with ivy">
+        <ivy:retrieve/>
+    </target>
+
+    <target name="report" depends="resolve" description="generates a report of dependencies">
+        <ivy:report todir="${build.dir}"/>
+    </target>
+
+    <target name="clean-cache" depends="init-ivy" description="clean the ivy cache">
+        <ivy:cleancache />
+    </target>
+
+    <target name="clean" description="clean the project">
+        <delete includeemptydirs="true">
+            <fileset dir="${basedir}">
+                <exclude name="src/**" />
+                <exclude name="build.xml" />
+              <exclude name="ivy.xml" />
+            </fileset>
+        </delete>
+    </target>
+
+    <target name="generate-dirs">
+        <mkdir dir="${src.dir}"/>
+        <mkdir dir="${lib.dir}"/>
+        <mkdir dir="${build.dir}"/>
+    </target>
+
+    <!-- ivy installing -->
+
+    <property name="ivy.install.version" value="2.0.0-beta1" />
+
+    <condition property="ivy.home" value="${env.IVY_HOME}">
+      <isset property="env.IVY_HOME" />
+    </condition>
+    <property name="ivy.home" value="${user.home}/.ant" />
+    <property name="ivy.jar.dir" value="${ivy.home}/lib" />
+    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+
+    <target name="download-ivy" unless="offline">
+        <mkdir dir="${ivy.jar.dir}"/>
+        <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+             dest="${ivy.jar.file}" usetimestamp="true"/>
+    </target>
+
+    <target name="init-ivy" depends="download-ivy" description="init ivy">
+        <path id="ivy.lib.path">
+            <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml"
+                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+    </target>
+</project>
